@@ -1,0 +1,62 @@
+# =============================================================================
+# Deployment - Manages your application pods
+# =============================================================================
+# This is the DECLARATIVE way to deploy (vs imperative kubectl create)
+# You describe WHAT you want, Kubernetes figures out HOW to make it happen
+# =============================================================================
+
+apiVersion: apps/v1          # API version for Deployments
+kind: Deployment             # Resource type
+metadata:
+  name: demo-app             # Name of this deployment
+  labels:
+    app: demo-app            # Labels for the deployment itself
+spec:
+  replicas: 3                # Run 3 copies for high availability
+  
+  # Selector - how the Deployment finds its pods
+  selector:
+    matchLabels:
+      app: demo-app          # Must match template labels below
+  
+  # Pod template - defines what each pod looks like
+  template:
+    metadata:
+      labels:
+        app: demo-app        # Pods get this label (matches selector above)
+    spec:
+      containers:
+      - name: demo-app
+        image: hashicorp/http-echo:1.0    # Simple app that echoes text
+        
+        # Arguments for this container
+        args:
+        - "-text=Hello from EKS! Pod: $(HOSTNAME)"
+        - "-listen=:8080"
+        
+        ports:
+        - containerPort: 8080    # App listens on this port
+        
+        # Resource limits - important for production!
+        resources:
+          requests:              # Minimum guaranteed
+            memory: "64Mi"
+            cpu: "100m"          # 100 millicores = 0.1 CPU
+          limits:                # Maximum allowed
+            memory: "128Mi"
+            cpu: "200m"
+        
+        # Health checks - Kubernetes uses these to manage pods
+        readinessProbe:          # Is the pod ready to receive traffic?
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        
+        livenessProbe:           # Is the pod still alive?
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10

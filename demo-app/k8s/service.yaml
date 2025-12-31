@@ -1,0 +1,23 @@
+# =============================================================================
+# Service - Exposes your application to traffic
+# =============================================================================
+# Creates a stable endpoint + AWS Load Balancer
+# =============================================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+spec:
+  type: LoadBalancer          # Creates an AWS ELB
+  
+  # Selector - finds pods with these labels
+  selector:
+    app: demo-app             # Matches pods from our Deployment
+  
+  ports:
+  - protocol: TCP
+    port: 80                  # External port (what users hit)
+    targetPort: 8080          # Container port (where app listens)
